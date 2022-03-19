@@ -1,0 +1,13 @@
+var list_of_servers = read('/grind_servers.txt').split('\r\n').concat(read('/victims.txt').split('\r\n'));
+
+for (var i = 0; i < list_of_servers.length; i++) {
+    s = list_of_servers[i];
+    if (s == '' || s == ' ' || s == '!!!' || !s) {
+        tprint(s, ' is skipped because it is not a server');
+        continue;
+    } else {
+        run('/scripts/transport_files.js', 1, s);
+    }
+}
+
+tprint('Done.')

@@ -1,0 +1,18 @@
+var server = args[0];
+
+while (true) {
+    if (getServerMoneyAvailable(server) < 0.125 * getServerMaxMoney(server)) {
+        grow(server);
+    } if (getServerMoneyAvailable(server) < 0.25 * getServerMaxMoney(server)) {
+        grow(server);
+    } if (getServerMoneyAvailable(server) == 0) {
+        tprint('WARNING: ', server, '\'s available money dropped to $0. Grow more before hacking!');
+        grow(server);
+    }
+
+    hack(server);
+
+    while (hackAnalyzeChance(server) < 0.3) {
+        weaken(server);
+    }
+}

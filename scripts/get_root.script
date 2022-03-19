@@ -1,0 +1,36 @@
+var num_ports = args[0];
+var port_opener = [brutessh, ftpcrack, relaysmtp, httpworm, sqlinject].slice(0, num_ports);
+var servers = args.slice(1);
+var port_opened, server;
+
+for (var i = 0; i < servers.length; i++) {
+    port_opened = true;
+    server = servers[i];
+    if (!hasRootAccess(server)) {
+        print('Attempting to take over server ', server, '...');
+        // Currently only supports up to 3 ports requirement
+        for (var j = 0; j < getServerNumPortsRequired(server); j++) {
+            try {
+                port_opener[j](server);
+            } catch (e) {
+                tprint('ERROR: More than ', num_ports, ' open ports needed for ', server, '.');
+                port_opened = false;
+                break;
+            }
+        }
+        if (port_opened) {
+            nuke(server);
+            // installBackdoor(server);
+            tprint('Server ', server, ' rooted. Install backdoor manually please.');
+        }
+    } else {
+        print('WARNING: Already rooted ', server, ', skipping progress...')
+    }
+    
+    print('Transporting hack files to ', server);
+    scp('/scripts/hack.script', server);
+    scp('/scripts/weaken-exp-grind.script', server);
+    scp('/scripts/simple_hack.script', server);
+    scp('/scripts/weaken_and_grow_only.script', server);
+    print('Done.')
+}

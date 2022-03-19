@@ -1,0 +1,13 @@
+var server = args[0];
+
+while (true) {
+    if (getServerMoneyAvailable(server) < 0.25 * getServerMaxMoney(server)) {
+        grow(server);
+    } if (getServerMoneyAvailable(server) < 0.5 * getServerMaxMoney(server)) {
+        grow(server);
+    }
+
+    if (hackAnalyzeChance(server) < 0.3) {
+        weaken(server);
+    }
+}

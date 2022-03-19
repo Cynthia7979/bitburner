@@ -1,0 +1,5 @@
+var desired_server = args[0];
+
+while (true) {
+    weaken(desired_server);
+}

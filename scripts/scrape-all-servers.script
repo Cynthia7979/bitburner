@@ -1,0 +1,29 @@
+/* Modified from some code on Reddit */
+hostName = getHostname();
+scanArray = [hostName];
+currentScanLength = 0;
+servers = [];
+while (currentScanLength < scanArray.length) {
+    previousScanLength = currentScanLength;
+    currentScanLength = scanArray.length;
+    for (i = previousScanLength; i < currentScanLength; i++) {
+        currentHost = scanArray[i];
+        server = [currentHost, getServerRequiredHackingLevel(currentHost), getServerMaxMoney(currentHost), getServerGrowth(currentHost), getServerSecurityLevel(currentHost)];
+        servers.push(server);
+        // uncomment this if you'd like to see a printout of the array as it is being made
+        tprint(server[0]);
+        tprint('----------------');
+        tprint('Difficulty: ' + server[1] + ' | Potential: $' + server[2]);
+        tprint('Growth Rate: ' + server[3] + ' | Security: ' + server[4]);
+        tprint('----------------');
+        newScan = scan(currentHost);
+        for (j = 0; j < newScan.length; j++) {
+            if (scanArray.indexOf(newScan[j]) == -1 && !newScan[j].includes('grinding-server')) {
+                scanArray.push(newScan[j]);
+            }
+        }
+    }
+}
+
+write('/the_network.txt', JSON.stringify(servers), 'w');
+tprint('Done. Saved to file /the_network.txt')

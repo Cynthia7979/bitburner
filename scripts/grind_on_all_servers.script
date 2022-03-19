@@ -1,0 +1,28 @@
+var servers = read('/grind_servers.txt').split('\r\n').concat(read('/all_servers_names.txt').split('\r\n')).concat(['home']);
+if (args) {
+    var server_to_grind = args[0];
+} else {
+    var server_to_grind = 'noodles';
+}
+
+var ram_for_one = getScriptRam('/scripts/weaken-exp-grind.script');
+
+for (var i = 0; i < servers.length; i++) {
+    var s = servers[i];
+    if (s == '' || s == ' ' || s == '!!!' || !s) {
+        print(s, ' is skipped because it is not a server');
+        continue;
+    } else {
+        var available_ram = getServerMaxRam(s) - getServerUsedRam(s);
+        print(ram_for_one, ' ', available_ram);
+        var threads = Math.floor(available_ram / ram_for_one);
+        if (threads > 0) {
+            exec('/scripts/weaken-exp-grind.script', s, threads, server_to_grind);
+            tprint('weaken-exp-grind started on ', s, ' with ', threads, ' threads.');
+        } else {
+            print('Skipping ', s);
+        }
+    }
+}
+
+tprint('Done.')

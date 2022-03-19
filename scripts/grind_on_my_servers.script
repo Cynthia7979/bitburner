@@ -1,0 +1,19 @@
+var servers = read('/grind_servers.txt').split('\r\n');
+servers.pop()
+
+var ram_for_one = getScriptRam('/scripts/weaken-exp-grind.script');
+
+for (var i = 0; i < servers.length; i++) {
+    var s = servers[i];
+    var available_ram = getServerMaxRam(s) - getServerUsedRam(s);
+    print(ram_for_one, ' ', available_ram);
+    var threads = Math.floor(available_ram / ram_for_one);
+    if (threads > 0) {
+        exec('/scripts/weaken-exp-grind.script', s, threads, 'n00dles'); // Fastest
+        tprint('weaken-exp-grind started on ', s, ' with ', threads, ' threads.');
+    } else {
+        tprint('Skipping ', s);
+    }
+}
+
+tprint('Done.')
