@@ -10,10 +10,11 @@ General idea before I forget:
  */
 
 const avg = (...args) => args.reduce((a, b) => a + b) / args.length;
-const isNoob = m => avg(m.agi, m.def, m.dex, m.str) > m.hack;
+const isNoob = m => avg(m.agi, m.def, m.dex, m.str, m.hack) <= 75;
 
 /** @param {NS} ns **/
 export async function main(ns) {
+    ns.disableLog('ALL');
     ns.tail();
 
     const args = ns.flags([
@@ -22,7 +23,8 @@ export async function main(ns) {
     ]);
 
     if (args['help']) {
-        ns.tprint('\nUsage:\n\trun gangs_my.js [--for-rep] [--help]\n\t--for-rep\tFarms reputation instead of money\n\t--help\tDisplays this manual.')
+        ns.tprint('\nUsage:\n\trun gangs_my.js [--for-rep] [--help]\n\t--for-rep\tFarms reputation instead of money\n\t--help\tDisplays this manual.');
+        ns.exit();
     }
 
     const forReputation = args['for-rep'];
@@ -35,9 +37,13 @@ export async function main(ns) {
 
     if (!gangInfo.isHacking) {
         ns.tprint('ERROR: This script only works on hacking gangs, now exiting... Sorry!');
-        return;
+        ns.exit();
+    } if (!ns.gang.inGang()) {
+        ns.tprint('ERROR: You are not in a gang! Exiting...');
+        ns.exit();
     }
 
+    ns.print('Loading gang member information');
     gangMembers.forEach(m => {
         let memberInfo = ns.gang.getMemberInformation(m);
         if (avg(memberInfo.agi, memberInfo.def, memberInfo.dex, memberInfo.str) > memberInfo.hack) {
@@ -51,7 +57,7 @@ export async function main(ns) {
         if (ns.gang.canRecruitMember()) {
             let newName = getName();
             ns.gang.recruitMember(newName);
-            ns.tprint(`Member recruited: ${newName}`);
+            ns.print(`Member recruited: ${newName}`)
         }
 
         gangMembers.forEach(m => {
@@ -69,6 +75,7 @@ export async function main(ns) {
                         currentMult.hack_asc_mult <= 2 * ascResult.hack)) {
                     ns.gang.ascendMember(m);
                     ascended = true;
+                    ns.print(`Ascended gang member ${m}.`);
                 }
             } if (!ascended) {
                 assign(ns, m, hackingMembers.includes(m) ? 'hack' : 'combat', forReputation);
@@ -103,19 +110,52 @@ function assign(ns, member, type, forRep = false) {
         'Identity Theft',
         'Fraud & Counterfeiting',
         'Money Laundering'
-    ],
-        hackHelper = 'Ethical Hacking',
+    ];
+    const hackHelper = 'Ethical Hacking',
         combatHelper = 'Vigilante Justice',
         hackTrain = 'Train Hacking',
         combatTrain = 'Train Combat',
+        territoryWarfare = 'Territory Warfare',
         memberInfo = ns.gang.getMemberInformation(member),
-        currentJob = memberInfo.task;;
-    if (isNoob(member)) {}
+        currentTask = memberInfo.task,
+        hackingMember = (type == 'hack');
+    var decidedTask = 'Idle';
+
+    if (isNoob(member)) {
+        decidedTask = hackingMember ? hackTrain : combatTrain;
+    } else {
+        if (!hackingMember) {
+            if (wantedLevelHelpNeeded(ns)) {
+                decidedTask = combatHelper;
+            } else {  // Wanted level doesn't need help
+                decidedTask = territoryWarfare;
+            }
+        } else {  // Is a hacking member
+            if (wantedLevelHelpNeeded(ns)) {
+                decidedTask = hackHelper;
+            } else {  // Wanted level says they're fine
+                let jobsToTryOut = forRep ? repJobs : moneyJobs;
+                for (let i = jobsToTryOut.length - 1; i > -1; i--) {  // Find the hardest possible task to assign
+                    if (!tooDifficult(ns, jobsToTryOut[i], member)) {
+                        decidedTask = jobsToTryOut[i];
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    if (decidedTask != currentTask) {
+        ns.gang.setMemberTask(member, decidedTask);
+        ns.print(`Assigned task ${decidedTask} to ${member}`);
+    }
+
+    return decidedTask;
 }
 
 function tooDifficult(ns, taskName, member) {
     const taskInfo = ns.gang.getTaskStats(taskName),
-        memberInfo = ns.getMemberInformation(member);
+        memberInfo = ns.gang.getMemberInformation(member);
     let statWeight =
         (taskInfo.hackWeight / 100) * memberInfo.hack +
         (taskInfo.strWeight / 100) * memberInfo.str +
@@ -123,5 +163,11 @@ function tooDifficult(ns, taskName, member) {
         (taskInfo.dexWeight / 100) * memberInfo.dex +
         (taskInfo.agiWeight / 100) * memberInfo.agi +
         (taskInfo.chaWeight / 100) * memberInfo.cha;
-    return statWeight - 4 * task.difficulty <= 0 ? true : false;
+    return statWeight - 4 * taskInfo.difficulty <= 0 ? true : false;
+}
+
+function wantedLevelHelpNeeded(ns) {
+    const gangInfo = ns.gang.getGangInformation();
+    return (gangInfo.wantedLevelGainRate > 1 && 100 * (1 - gangInfo.wantedPenalty) > 2) ||
+        (gangInfo.wantedLevelGainRate > 5);
 }
