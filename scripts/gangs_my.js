@@ -64,13 +64,13 @@ export async function main(ns) {
             let ascended = false;
             let ascResult = ns.gang.getAscensionResult(m),
                 currentMult = ns.gang.getMemberInformation(m);
-            if (ascResult) {  // Can ascend
+            if (ascResult != undefined) {  // Can ascend
                 if (
                     (combatMembers.includes(m) &&
-                        currentMult.agi_asc_mult <= 2 * ascResult.agi &&
-                        currentMult.def_asc_mult <= 2 * ascResult.def &&
-                        currentMult.dex_asc_mult <= 2 * ascResult.dex &&
-                        currentMult.str_asc_mult <= 2 * ascResult.str) ||
+                        currentMult.agi_asc_mult * 2 <=  ascResult.agi &&
+                        currentMult.def_asc_mult * 2 <= ascResult.def &&
+                        currentMult.dex_asc_mult * 2 <=  ascResult.dex &&
+                        currentMult.str_asc_mult * 2 <=  ascResult.str) ||
                     (hackingMembers.includes(m) &&
                         currentMult.hack_asc_mult <= 2 * ascResult.hack)) {
                     ns.gang.ascendMember(m);
