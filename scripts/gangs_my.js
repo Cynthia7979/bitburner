@@ -67,12 +67,12 @@ export async function main(ns) {
             if (ascResult != undefined) {  // Can ascend
                 if (
                     (combatMembers.includes(m) &&
-                        currentMult.agi_asc_mult * 2 <=  ascResult.agi &&
+                        currentMult.agi_asc_mult * 2 <= ascResult.agi &&
                         currentMult.def_asc_mult * 2 <= ascResult.def &&
-                        currentMult.dex_asc_mult * 2 <=  ascResult.dex &&
-                        currentMult.str_asc_mult * 2 <=  ascResult.str) ||
+                        currentMult.dex_asc_mult * 2 <= ascResult.dex &&
+                        currentMult.str_asc_mult * 2 <= ascResult.str) ||
                     (hackingMembers.includes(m) &&
-                        currentMult.hack_asc_mult <= 2 * ascResult.hack)) {
+                        currentMult.hack_asc_mult * 2 <= ascResult.hack)) {  // Good enough to ascend
                     ns.gang.ascendMember(m);
                     ascended = true;
                     ns.print(`Ascended gang member ${m}.`);
@@ -145,7 +145,7 @@ function assign(ns, member, type, forRep = false) {
         }
     }
 
-    if (decidedTask != currentTask) {
+    if (decidedTask != currentTask && decidedTask != 'Idle') {
         ns.gang.setMemberTask(member, decidedTask);
         ns.print(`Assigned task ${decidedTask} to ${member}`);
     }

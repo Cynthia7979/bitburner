@@ -1,3 +1,5 @@
+import { manual, verify } from '/scripts/cynthia7979_util.js';
+
 /** @param {NS} ns **/
 export async function main(ns) {
     const args = ns.flags([
@@ -10,6 +12,8 @@ export async function main(ns) {
         ['grind-share', false],
         ['share-all', false],
         ['no-hack', false],
+        ['for-rep', false],
+        ['init', false],
         ['help', false]
     ])
 
@@ -22,11 +26,26 @@ export async function main(ns) {
         grind_share = args['grind-share'],
         share_mode = args['share-all'],
         no_hack = args['no-hack'],
+        for_reputation = args['for-rep'],
+        init = args['init'],
         help = args['help'],
         servers_to_hack = args['_'].length ? args['_'] : ns.read('/all_servers_names.txt').split('\r\n');
 
     if (help) {
-        ns.tprint('\nUsage:\n\trun boot.js [--fast] [--grind-hack] [--no-buy-servers] [--weaken-server phantasy] [--single-hack-server phantasy] [--no-home] [--grind-share] [--share-all] [--no-hack] [--help]\n\n--fast\t\t\tEnables fast mode and prevents script from growing/weakening servers that are currently not hackable.\n\t\t\tSwitch this on if game freezes on boot.\n--grind-hack\t\tInstead of grinding with weaken(), grinds with hack.script against server specified in --single-hack-server.\n\t\t\tWeaken-grinding function will still be called to exploit the most RAM.\n--no-buy-servers\tPrevents the script from running buy_server.js. Saves you money.\n--weaken-server\t\tThe hostname to pass to grind_on_all_servers.script.\n--single-hack-server\tThe hostname to enable multiple threads on hacking.\n--no-home\t\tDisables grinding and hacking on \'home\'.\n--grind-share\t\tInstead of weaken(), grinds with simple_share.js on all servers. Weaken-grinding function will still be called to exploit the most RAM. \n--share-all\t\tDisables all hacking and shares on all servers.\n--no-hack\t\tDisables hacking and only does the grinding.\n--help\t\t\tDisplays this manual.')
+        ns.tprint(manual('boot.js', {
+            'fast': 'Enables fast mode and prevents script from growing/weakening servers that are currently not hackable. Switch this on if game freezes on boot.',
+            'grind-hack': 'Instead of grinding with weaken(), grinds with hack.script against server specified in --single-hack-server. Weaken-grinding function will still be called to exploit the most RAM.',
+            'no-buy-servers': 'Prevents the script from running buy_server.js. Saves you money.',
+            'weaken-server phantasy': 'The hostname to pass to grind_on_all_servers.script.',
+            'single-hack-server phantasy': 'The hostname to enable multiple threads on hacking.',
+            'no-home': 'Disables grinding and hacking on \'home\'.',
+            'grind-share': 'Instead of weaken(), grinds with simple_share.js on all servers. Weaken-grinding function will still be called to exploit the most RAM.',
+            'share-all': 'Disables all hacking and shares on all servers.',
+            'no-hack': 'Disables hacking and only does the grinding.',
+            'for-rep': 'Grinds the Gang (if any) for reputation.',
+            'init': 'Resets /grind_servers.txt - recommended to have this on after installing augmentation.',
+            'help': 'Displays this manual.'
+        }));
         ns.exit();
     }
 
@@ -34,6 +53,11 @@ export async function main(ns) {
 
     ns.print(servers_to_autorun);
     ns.print(servers_to_hack);
+
+    if (init) {
+        await ns.write('/grind_servers.txt', '', 'w');
+        ns.tprint('/grind_servers.txt cleared.');
+    }
 
     ns.tprint('Starting auto-hacknet-buy.js...');
     ns.run('/scripts/auto-hacknet-buy.js');
@@ -62,6 +86,11 @@ export async function main(ns) {
         ns.tprint('Starting buy_server.js...');
         ns.run('/scripts/buy_server.js');
         await ns.sleep(100);
+    }
+
+    if (ns.gang.inGang()) {
+        ns.tprint('Starting gangs script...');
+        ns.run('/scripts/gangs_my.js', 1, for_reputation ? '--for-rep' : '');
     }
 
     ns.tprint('Beginning the grinding process...');
@@ -137,12 +166,4 @@ function grind_the_list(ns, victim, list_of_hosts, mode) {
     }
 
     ns.tprint('Finished running grind_the_list on servers with mode ', mode);
-}
-
-function verify(server, for_hack = false) {
-    if (!for_hack) {
-        return !['', ' '].includes(server);
-    } else {
-        return !['CSEC', 'I.I.I.I', '.', 'avmnite-02h', 'run4theh111z', '', ' ', 'darkweb'].includes(server);
-    }
 }
