@@ -1,19 +1,19 @@
 /* 
-General idea before I forget: 
-- Hardest tasks for best hackers
-- Always keep wanted level low
-- Split members into hacking and combat
-- Only let combat members reduce wanted level
-- Buy baseball bats for combat, NUKE rootkit for hack
-- Train until newbie's stat increase speed is lower than 0.5/tick
-- Ascend when multiplier of respective stat exceeds 2x current
- */
+This script manages ALL gang members. It updates once every minute
+and covers tasks like task assignment, ascension, equipment purchasing, and member recruitment.
+
+Usage: 
+    run gangs_my.js [--for-rep] [--help]
+--for-rep   Farms reputation instead of mone
+--help      Displays this manual
+*/
 
 const avg = (...args) => args.reduce((a, b) => a + b) / args.length;
 const isNoob = m => avg(m.agi, m.def, m.dex, m.str, m.hack) <= 75;
 
 /** @param {NS} ns **/
 export async function main(ns) {
+    ns.tprint('gangs_my.js running!');
     ns.disableLog('ALL');
     ns.tail();
 
@@ -23,7 +23,7 @@ export async function main(ns) {
     ]);
 
     if (args['help']) {
-        ns.tprint('\nUsage:\n\trun gangs_my.js [--for-rep] [--help]\n\t--for-rep\tFarms reputation instead of money\n\t--help\tDisplays this manual.');
+        ns.tprint('\nUsage:\n\trun gangs_my.js [--for-rep] [--help]\n--for-rep\tFarms reputation instead of money\n--help\t\tDisplays this manual.');
         ns.exit();
     }
 
@@ -46,41 +46,65 @@ export async function main(ns) {
     ns.print('Loading gang member information');
     gangMembers.forEach(m => {
         let memberInfo = ns.gang.getMemberInformation(m);
-        if (avg(memberInfo.agi, memberInfo.def, memberInfo.dex, memberInfo.str) > memberInfo.hack) {
+        if ((avg(memberInfo.agi, memberInfo.def, memberInfo.dex, memberInfo.str) > memberInfo.hack) ||
+            (isNoob(memberInfo) && combatMembers.length < 2)) {
             combatMembers.push(m);
+            ns.print(`${m}: Is a combat member`);
         } else {
             hackingMembers.push(m);
+            ns.print(`${m}: Is a hacking member`);
         }
     })
 
     while (true) {
+        ns.print('Starting new loop')
+
+        gangMembers = ns.gang.getMemberNames();
+
         if (ns.gang.canRecruitMember()) {
             let newName = getName();
+            while (gangMembers.includes(newName)) {
+                newName = getName();
+            }
             ns.gang.recruitMember(newName);
-            ns.print(`Member recruited: ${newName}`)
+            ns.print(`Member recruited: ${newName}`);
+            if (combatMembers.length < 2) {
+                combatMembers.push(newName);
+            }
         }
 
         gangMembers.forEach(m => {
             let ascended = false;
             let ascResult = ns.gang.getAscensionResult(m),
-                currentMult = ns.gang.getMemberInformation(m);
+                currentMult = ns.gang.getMemberInformation(m),
+                memberType = hackingMembers.includes(m) ? 'hack' : 'combat';
             if (ascResult != undefined) {  // Can ascend
                 if (
                     (combatMembers.includes(m) &&
-                        currentMult.agi_asc_mult * 2 <= ascResult.agi &&
-                        currentMult.def_asc_mult * 2 <= ascResult.def &&
-                        currentMult.dex_asc_mult * 2 <= ascResult.dex &&
-                        currentMult.str_asc_mult * 2 <= ascResult.str) ||
+                        Math.min(currentMult.agi_asc_mult * 2, currentMult.agi_asc_mult + 15) <= currentMult.agi_asc_mult * ascResult.agi &&
+                        Math.min(currentMult.def_asc_mult * 2, currentMult.def_asc_mult + 15) <= currentMult.def_asc_mult * ascResult.def &&
+                        Math.min(currentMult.dex_asc_mult * 2, currentMult.dex_asc_mult + 15) <= currentMult.dex_asc_mult * ascResult.dex &&
+                        Math.min(currentMult.str_asc_mult * 2, currentMult.str_asc_mult + 15) <= currentMult.str_asc_mult * ascResult.str) ||
                     (hackingMembers.includes(m) &&
-                        currentMult.hack_asc_mult * 2 <= ascResult.hack)) {  // Good enough to ascend
+                        Math.min(currentMult.hack_asc_mult * 2, currentMult.hack_asc_mult + 15) <= currentMult.hack_asc_mult * ascResult.hack)) {  // Good enough to ascend
                     ns.gang.ascendMember(m);
                     ascended = true;
                     ns.print(`Ascended gang member ${m}.`);
                 }
             } if (!ascended) {
-                assign(ns, m, hackingMembers.includes(m) ? 'hack' : 'combat', forReputation);
+                assign(ns, m, memberType, forReputation);
             }
-        });
+            buyEquipment(ns, m, memberType);
+        });  // End of individual member assignment
+
+        if (canFight(ns, combatMembers.length)) {
+            if (ns.gang.getGangInformation().territoryWarfareEngaged) {
+                ns.gang.setTerritoryWarfare(true);
+                ns.print('Territory warfare enabled');
+            }
+        } else {
+            ns.gang.setTerritoryWarfare(false);
+        }
 
         await ns.sleep(60000);
     }
@@ -119,9 +143,9 @@ function assign(ns, member, type, forRep = false) {
         memberInfo = ns.gang.getMemberInformation(member),
         currentTask = memberInfo.task,
         hackingMember = (type == 'hack');
-    var decidedTask = 'Idle';
+    var decidedTask = 'Unassigned';
 
-    if (isNoob(member)) {
+    if (isNoob(memberInfo)) {
         decidedTask = hackingMember ? hackTrain : combatTrain;
     } else {
         if (!hackingMember) {
@@ -145,12 +169,22 @@ function assign(ns, member, type, forRep = false) {
         }
     }
 
-    if (decidedTask != currentTask && decidedTask != 'Idle') {
+    if (currentTask == 'Unassigned' || (decidedTask != currentTask && decidedTask != 'Unassigned')) {
         ns.gang.setMemberTask(member, decidedTask);
         ns.print(`Assigned task ${decidedTask} to ${member}`);
     }
 
     return decidedTask;
+}
+
+function buyEquipment(ns, member, type) {
+    if (ns.gang.getMemberInformation(member).upgrades.length == 0) {
+        if (type == 'hack') {
+            ns.gang.purchaseEquipment(member, 'NUKE Rootkit');
+        } else {
+            ns.gang.purchaseEquipment(member, 'Baseball Bat');
+        }
+    }
 }
 
 function tooDifficult(ns, taskName, member) {
@@ -162,12 +196,29 @@ function tooDifficult(ns, taskName, member) {
         (taskInfo.defWeight / 100) * memberInfo.def +
         (taskInfo.dexWeight / 100) * memberInfo.dex +
         (taskInfo.agiWeight / 100) * memberInfo.agi +
-        (taskInfo.chaWeight / 100) * memberInfo.cha;
+        (taskInfo.chaWeight / 100) * memberInfo.cha;  // From source code
     return statWeight - 4 * taskInfo.difficulty <= 0 ? true : false;
 }
 
 function wantedLevelHelpNeeded(ns) {
     const gangInfo = ns.gang.getGangInformation();
     return (gangInfo.wantedLevelGainRate > 1 && 100 * (1 - gangInfo.wantedPenalty) > 2) ||
-        (gangInfo.wantedLevelGainRate > 5);
+        (gangInfo.wantedLevelGainRate > 5) ||
+        (100 * (1 - gangInfo.wantedPenalty) > 5);
+}
+
+function canFight(ns, numOfFighters) {
+    const otherGangs = [
+        'Slum Snakes',
+        'Speakers for the Dead',
+        'The Black Hand',
+        'The Dark Army',
+        'The Syndicate',
+        'NiteSec',
+        'Tetrads'
+    ].filter(g => g != ns.gang.getGangInformation.faction);
+    const winChance = avg(...otherGangs.map(
+        g => ns.gang.getChanceToWinClash(g)
+    ));
+    return (winChance > 0.5) && (numOfFighters > 1);
 }

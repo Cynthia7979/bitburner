@@ -84,7 +84,7 @@ export async function main(ns) {
 
     if (auto_buy_server) {
         ns.tprint('Starting buy_server.js...');
-        ns.run('/scripts/buy_server.js');
+        ns.run('/scripts/buy_server.js', 1, weaken_victim);
         await ns.sleep(100);
     }
 
