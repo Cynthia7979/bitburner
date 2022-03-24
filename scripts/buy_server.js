@@ -1,12 +1,13 @@
 /** @param {NS} ns **/
 export async function main(ns) {
     var current_min_ram, new_purchased_server,
-        current_purchasing_ram = 16384,
+        current_purchasing_ram = 32768,
         current_needed_money = ns.getPurchasedServerCost(current_purchasing_ram),
         existing_servers = ns.getPurchasedServers(),
-        // server_limit = ns.getPurchasedServerLimit(),
-        server_limit = 10,
+        server_limit = ns.getPurchasedServerLimit(),
+        // server_limit = 10,
         ram_limit = ns.getPurchasedServerMaxRam();
+    const weaken_server = ns.args[0] ? ns.args[0] : 'phantasy';
 
     ns.tprint('buy_server.js running!');
 
@@ -38,8 +39,8 @@ export async function main(ns) {
             ns.run('/scripts/transport_files.js', 1, new_purchased_server);
             ns.toast('Purchased new server ' + new_purchased_server);
             await ns.sleep(5000);  // Make sure that files were transported
-            if (ns.hasRootAccess('phantasy')) {
-                ns.run('/scripts/grind_on_my_servers.script', 1, 'phantasy');
+            if (ns.hasRootAccess(weaken_server)) {
+                ns.run('/scripts/grind_on_my_servers.script', 1, weaken_server);
             } else {
                 ns.run('/scripts/grind_on_my_servers.script', 1, 'joesguns');
             }

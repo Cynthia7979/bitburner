@@ -7,11 +7,14 @@ export async function main(ns) {
 
     player = ns.getPlayer();
     const initial_hack_exp = player.hacking_exp;
+    const start_time = Date.now();
 
     await ns.sleep(time * 60000);  // Wait for the specified amount of minutes
 
     player = ns.getPlayer();
     const new_hack_exp = player.hacking_exp;
+    const end_time = Date.now();
 
-    ns.tprint('Your hacking exp growth rate is: ', (new_hack_exp - initial_hack_exp) / time * 60, ' / s');
+    ns.tprint(`Time Elapsed: ${end_time - start_time} ms`)
+    ns.tprint('Your hacking exp growth rate is: ', (new_hack_exp - initial_hack_exp) / ((end_time - start_time) / 1000), ' / s');
 }

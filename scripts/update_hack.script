@@ -1,4 +1,4 @@
-var list_of_servers = read('/grind_servers.txt').split('\r\n').concat(read('/victims.txt').split('\r\n'));
+var list_of_servers = read('/grind_servers.txt').split('\r\n').concat(read('/all_servers_names.txt').split('\r\n'));
 
 for (var i = 0; i < list_of_servers.length; i++) {
     s = list_of_servers[i];

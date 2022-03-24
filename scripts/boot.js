@@ -6,14 +6,15 @@ export async function main(ns) {
         ['fast', false],
         ['grind-hack', false],
         ['no-buy-servers', false],
-        ['weaken-server', 'phantasy'],
-        ['single-hack-server', 'phantasy'],
+        ['weaken-server', 'joesguns'],
+        ['single-hack-server', 'joesguns'],
         ['no-home', false],
         ['grind-share', false],
         ['share-all', false],
         ['no-hack', false],
         ['for-rep', false],
         ['init', false],
+        ['no-buy-hacknet', false],
         ['help', false]
     ])
 
@@ -28,22 +29,24 @@ export async function main(ns) {
         no_hack = args['no-hack'],
         for_reputation = args['for-rep'],
         init = args['init'],
+        auto_buy_hacknet = !args['no-buy-hacknet'],
         help = args['help'],
         servers_to_hack = args['_'].length ? args['_'] : ns.read('/all_servers_names.txt').split('\r\n');
 
     if (help) {
         ns.tprint(manual('boot.js', {
             'fast': 'Enables fast mode and prevents script from growing/weakening servers that are currently not hackable. Switch this on if game freezes on boot.',
-            'grind-hack': 'Instead of grinding with weaken(), grinds with hack.script against server specified in --single-hack-server. Weaken-grinding function will still be called to exploit the most RAM.',
+            'grind-hack': 'Instead of grinding with weaken(), grinds with hack.js against server specified in --single-hack-server. Weaken-grinding function will still be called to exploit the most RAM.',
             'no-buy-servers': 'Prevents the script from running buy_server.js. Saves you money.',
-            'weaken-server phantasy': 'The hostname to pass to grind_on_all_servers.script.',
-            'single-hack-server phantasy': 'The hostname to enable multiple threads on hacking.',
+            'weaken-server joesguns': 'The hostname to pass to grind_on_all_servers.js.',
+            'single-hack-server joesguns': 'The hostname to enable multiple threads on hacking.',
             'no-home': 'Disables grinding and hacking on \'home\'.',
             'grind-share': 'Instead of weaken(), grinds with simple_share.js on all servers. Weaken-grinding function will still be called to exploit the most RAM.',
             'share-all': 'Disables all hacking and shares on all servers.',
             'no-hack': 'Disables hacking and only does the grinding.',
             'for-rep': 'Grinds the Gang (if any) for reputation.',
             'init': 'Resets /grind_servers.txt - recommended to have this on after installing augmentation.',
+            'no-buy-hacknet': 'Disables auto-buying hacknet nodes.',
             'help': 'Displays this manual.'
         }));
         ns.exit();
@@ -59,9 +62,11 @@ export async function main(ns) {
         ns.tprint('/grind_servers.txt cleared.');
     }
 
-    ns.tprint('Starting auto-hacknet-buy.js...');
-    ns.run('/scripts/auto-hacknet-buy.js');
-    await ns.sleep(100);
+    if (auto_buy_hacknet) {
+        ns.tprint('Starting auto-hacknet-buy.js...');
+        ns.run('/scripts/auto-hacknet-buy.js');
+        await ns.sleep(100);
+    }
 
     ns.tprint('TIP: Remember to update your distributive network regularly!');
     await ns.sleep(100);
@@ -102,7 +107,8 @@ export async function main(ns) {
         }
     }
     await ns.sleep(100);
-    grind_the_list(ns, weaken_victim, servers_to_autorun, 'weaken');
+    // grind_the_list(ns, weaken_victim, servers_to_autorun, 'weakengrow');
+    grind_the_list(ns, weaken_victim, servers_to_autorun, 'weaken')
     await ns.sleep(100);
 
     ns.tprint('Done!');
@@ -124,10 +130,10 @@ function hack_the_list(ns, host, list_of_servers, fast_mode, special_server = nu
                     if (ns.hasRootAccess(server)) {
                         if (server != special_server) {
                             if (enough_for_hack(ns, server)) {
-                                has_enough_ram = ns.exec('/scripts/hack.script', host, 1, server);  // Do the hacking
+                                has_enough_ram = ns.exec('/scripts/hack.js', host, 1, server);  // Do the hacking
                             } else {
                                 if (!fast_mode) {
-                                    has_enough_ram = ns.exec('/scripts/weaken_and_grow_only.script', host, 1, server);  // Only weaken and grow
+                                    has_enough_ram = ns.exec('/scripts/weaken_and_grow_only.js', host, 1, server);  // Only weaken and grow
                                 }
                             }
                         } else {
@@ -150,13 +156,13 @@ function hack_the_list(ns, host, list_of_servers, fast_mode, special_server = nu
 
 function grind_the_list(ns, victim, list_of_hosts, mode) {
     /* Weakens, hacks, or shares on the victim from the list of hosts using all the RAM available. */
-    const script_to_run = { 'weaken': '/scripts/weaken-exp-grind.script', 'hack': '/scripts/hack.script', 'share': '/scripts/simple_share.js' }[mode],
+    const script_to_run = { 'weakengrow': '/scripts/weaken_and_grow_only.js', 'weaken': '/scripts/weaken-exp-grind.js', 'hack': '/scripts/hack.js', 'share': '/scripts/simple_share.js' }[mode],
         ram_per_thread = ns.getScriptRam(script_to_run);
 
     for (let host of list_of_hosts) {
         if (verify(host)) {
             var available_ram = ns.getServerMaxRam(host) - ns.getServerUsedRam(host),
-                num_of_threads = Math.floor(available_ram / ram_per_thread);
+                num_of_threads = Math.floor(available_ram / ram_per_thread) - 1;
             if (num_of_threads > 0) {
                 (mode == 'share') ? ns.exec(script_to_run, host, num_of_threads) : ns.exec(script_to_run, host, num_of_threads, victim);
             } else {

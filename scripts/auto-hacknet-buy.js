@@ -27,7 +27,7 @@ export async function main(ns) {
         if (nodeCost < usableMoney) {
             // Yep, let's rock
             net.purchaseNode();
-            ns.toast('HackNet node purchased: $' + format(nodeCost));
+            ns.print('HackNet node purchased: $' + format(nodeCost));
             minMoney += nodeCost / 2;
             purchased = true;
             
@@ -70,14 +70,14 @@ export async function main(ns) {
                 } else if (type == 'cpu') {
                     net.upgradeCore(node, 1);
                 }
-                ns.toast('Upgrading HackNet ' + type + ' for $' + format(minCost));
+                ns.print('Upgrading HackNet ' + type + ' for $' + format(minCost));
                 minMoney += minCost / 2;
                 purchased = true;
             }
         }
         
         // And sleep for a bit
-        await ns.sleep(purchased ? 1000 : 30000);
+        await ns.sleep(purchased ? 100 : 30000);
     }
 }
 
