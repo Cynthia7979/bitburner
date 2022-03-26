@@ -1,4 +1,4 @@
-import { manual, verify } from '/scripts/cynthia7979_util.js';
+import { manual, verify, transportFilesTo } from '/scripts/cynthia7979_util.js';
 
 /** @param {NS} ns **/
 export async function main(ns) {
@@ -23,7 +23,6 @@ export async function main(ns) {
         auto_buy_server = !args['no-buy-servers'],
         weaken_victim = args['weaken-server'],
         server_to_target_specifically = args['single-hack-server'],
-        servers_to_autorun = ns.read('/all_servers_names.txt').split('\r\n').concat(ns.read('/grind_servers.txt').split('\r\n')).concat(args['no-home'] ? [] : ['home']),
         grind_share = args['grind-share'],
         share_mode = args['share-all'],
         no_hack = args['no-hack'],
@@ -32,6 +31,7 @@ export async function main(ns) {
         auto_buy_hacknet = !args['no-buy-hacknet'],
         help = args['help'],
         servers_to_hack = args['_'].length ? args['_'] : ns.read('/all_servers_names.txt').split('\r\n');
+    var servers_to_autorun = ns.read('/all_servers_names.txt').split('\r\n').concat(ns.read('/grind_servers.txt').split('\r\n')).concat(args['no-home'] ? [] : ['home']),
 
     if (help) {
         ns.tprint(manual('boot.js', {
@@ -60,6 +60,8 @@ export async function main(ns) {
     if (init) {
         await ns.write('/grind_servers.txt', '', 'w');
         ns.tprint('/grind_servers.txt cleared.');
+        servers_to_autorun = ns.read('/all_servers_names.txt').split('\r\n').concat(args['no-home'] ? [] : ['home']);
+        await transportFilesTo(ns, ...servers_to_autorun);
     }
 
     if (auto_buy_hacknet) {

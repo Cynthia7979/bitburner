@@ -21,3 +21,21 @@ export function verify(server, for_hack = false) {
         return !['CSEC', 'I.I.I.I', '.', 'avmnite-02h', 'run4theh111z', '', ' ', 'darkweb'].includes(server);
     }
 }
+
+export async function transportFilesTo(ns, ...servers) {
+    for (let i = 0; i < servers.length; i++) {
+        let s = servers[i];
+        if (s == '' || s == ' ' || s == '!!!' || !s) {
+            ns.tprint(s, ' is skipped because it is not a server');
+            continue;
+        } else {
+            await ns.scp('/scripts/hack.js', s);
+            await ns.scp('/scripts/weaken-exp-grind.js', s);
+            await ns.scp('/scripts/simple_share.js', s);
+            await ns.scp('/scripts/weaken_and_grow_only.js', s);
+            ns.print('Tranported files to ', s);
+        }
+    }
+
+    ns.tprint('Done.')
+}

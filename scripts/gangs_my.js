@@ -97,7 +97,7 @@ export async function main(ns) {
             buyEquipment(ns, m, memberType);
         });  // End of individual member assignment
 
-        if (canFight(ns, combatMembers.length)) {
+        if (canFight(ns)) {
             if (ns.gang.getGangInformation().territoryWarfareEngaged) {
                 ns.gang.setTerritoryWarfare(true);
                 ns.print('Territory warfare enabled');
@@ -148,11 +148,15 @@ function assign(ns, member, type, forRep = false) {
     if (isNoob(memberInfo)) {
         decidedTask = hackingMember ? hackTrain : combatTrain;
     } else {
-        if (!hackingMember) {
+        if (!hackingMember) {  // Is a combat member
             if (wantedLevelHelpNeeded(ns)) {
                 decidedTask = combatHelper;
             } else {  // Wanted level doesn't need help
-                decidedTask = territoryWarfare;
+                if (canFight(ns) || currentTask == combatTrain) {
+                    decidedTask = territoryWarfare;
+                } else {
+                    decidedTask = combatTrain;
+                }
             }
         } else {  // Is a hacking member
             if (wantedLevelHelpNeeded(ns)) {
@@ -207,7 +211,7 @@ function wantedLevelHelpNeeded(ns) {
         (100 * (1 - gangInfo.wantedPenalty) > 5);
 }
 
-function canFight(ns, numOfFighters) {
+function canFight(ns) {
     const otherGangs = [
         'Slum Snakes',
         'Speakers for the Dead',
@@ -220,5 +224,5 @@ function canFight(ns, numOfFighters) {
     const winChance = avg(...otherGangs.map(
         g => ns.gang.getChanceToWinClash(g)
     ));
-    return (winChance > 0.5) && (numOfFighters > 1);
+    return (winChance > 0.5);
 }

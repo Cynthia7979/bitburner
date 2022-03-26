@@ -1,4 +1,3 @@
-/* Modified from some code on Reddit */
 hostName = getHostname();
 scanArray = [hostName];
 currentScanLength = 0;
