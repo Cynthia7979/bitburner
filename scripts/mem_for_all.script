@@ -1,0 +1,5 @@
+var servers = read("victims.txt").split('\r\n \r\n')[0].split("\r\n");
+for (var i; i < servers.length; i++) {
+    var s = servers[i];
+    console.log(getServerRam(s), '/', getServerMaxRam(s))
+}

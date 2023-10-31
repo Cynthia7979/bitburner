@@ -1,0 +1,12 @@
+var servers_to_autorun = read('/victims.txt').split('\r\n').concat(read('/grind_servers.txt').split('\r\n'));
+print(servers_to_autorun)
+
+for (var i = 0; i < servers_to_autorun.length; i++) {
+    s = servers_to_autorun[i];
+    if (s != ' ' && s) {
+        tprint(s);
+        exec('/scripts/auto_start_hack.script', servers_to_autorun[i]);
+    }
+}
+
+tprint('Done');

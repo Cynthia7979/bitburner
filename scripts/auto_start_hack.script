@@ -1,0 +1,15 @@
+var servers = read('/victims.txt').split('\r\n \r\n')[0].split('\r\n');
+
+// Check if hack.script exists
+if (!fileExists('/scripts/hack.script')) {
+    // If not, copy it over
+    print('hack.script is not on this server. Copying over from home...')
+    scp('/scripts/hack.script', 'home', getHostname());
+    print('Successfully copied hack.script.')
+}
+
+// Start hack.script for all given servers
+for (var i = 0; i < servers.length; i++) {
+    print('Starting hack for server', servers[i]);
+    run('/scripts/hack.script', 1, servers[i]);
+}

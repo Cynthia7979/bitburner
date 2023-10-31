@@ -1,0 +1,21 @@
+var list_of_servers = read('/victims.txt').split('\r\n');
+list_of_servers.pop()
+
+var i = 0;
+
+while (true) {
+	for (i = 0; i < list_of_servers.length; i++) {
+		server = list_of_servers[i];
+		print('Working on ' + server + '...');
+
+		if (getServerMoneyAvailable(server) < 0.7 * getServerMaxMoney(server)) {
+			grow(server);
+		}
+
+		hack(server);
+
+		if (getServerSecurityLevel(server) >= 1.25 * getServerMinSecurityLevel(server)) {
+			weaken(server)
+		}
+	}
+}

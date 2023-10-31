@@ -1,0 +1,34 @@
+// Load server list from file
+var serverList = JSON.parse(read('/the_network.txt'));
+tprint('Sorting...');
+
+// Slow version
+servers.sort(function(a, b) {
+    print(a, b);
+    var keyA = a[1],  // Required Hacking Level
+    keyB = b[1];
+    // Compare the 2 dates
+    if (keyA < keyB) return -1;
+    if (keyA > keyB) return 1;
+    return 0;
+});
+
+tprint(servers.join('\n'));
+
+// Possibly slower version
+// sortedServerList = [];
+// while (serverList.length > 0) {
+//     print(serverList.length);
+//     lowest = 99999;
+//     index = null;
+    
+//     for (i = 0; i < serverList.length; i++) {
+//         if (serverList[i][1] < lowest) {
+//             lowest = serverList[i][1];
+//             index = i;
+//         }
+//     }
+//     sortedServerList.push(serverList[index]);
+//     serverList.splice(index, 1);
+// }
+// tprint(sortedServerList.join('\n'));

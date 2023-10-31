@@ -1,0 +1,9 @@
+if (args) {
+    server = args[0];
+} else {
+    server = 'n00dles';  // In the future maybe automatically hack the highest income
+}
+
+while (true) {
+    grow(server);
+}

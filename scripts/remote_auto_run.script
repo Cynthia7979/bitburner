@@ -1,0 +1,5 @@
+var servers_to_autorun = args;
+for (var i = 0; i < servers_to_autorun.length; i++) {
+    exec('/scripts/auto_start_hack.script', servers_to_autorun[i], 1, 
+    'neo-net', 'zer0', 'silver-helix', 'iron-gym', 'CSEC', 'max-hardware', 'harakiri-sushi', 'hong-fang-tea', 'nectar-net', 'n00dles', 'foodnstuff', 'sigma-cosmetics', 'joesguns');
+}
